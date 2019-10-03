@@ -1,4 +1,4 @@
-Partial Broken. 
+Partialy Broken (Core Works) 
 
 Things to do: 
 - Fix output format to send to discord. 
