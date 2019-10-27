@@ -1,9 +1,17 @@
-Partialy Broken (Core Works) 
+Fully Fuctional STOCKX, STADIUMG GOODS, GOAT PRCE SEARCHING
+
+Python = 3.7
+
+Required Libaries: 
+discord
+urlib
+requests
+googlesearch
+re
+json
+
 
 Things to do: 
-- Fix output format to send to discord. 
-- Figure out how SG loads its Divs(they dont list it in order as you see on your screen)
-- indexing SG webpages for quicker search
-- Add Stockx
-- Add Goat
-- Add Flight Club
+- Fix Goat Pricing Format
+- Fix Stockx Embded Foramt for sizing
+- Add Flight Club (Future) 
