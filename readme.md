@@ -3,12 +3,12 @@ Fully Fuctional STOCKX, STADIUMG GOODS, GOAT PRCE SEARCHING
 Python = 3.7
 
 Required Libaries: 
-discord
-urlib
-requests
-googlesearch
-re
-json
+- discord
+- urlib
+- requests
+- googlesearch
+- re
+- json
 
 
 Things to do: 
