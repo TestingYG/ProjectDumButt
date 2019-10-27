@@ -15,3 +15,4 @@ Things to do:
 - Fix Goat Pricing Format
 - Fix Stockx Embded Foramt for sizing
 - Add Flight Club (Future) 
+- Add commands to search for non-shoe items
