@@ -15,7 +15,7 @@ async def on_ready():
 @bot.command(pass_context=True)
 async def search(ctx, *args):
 
-    sites = [" Stadium Goods", " Goat"]
+    sites = [" Stadium Goods"]
     urllist = []
     headers = {}
     headers['User-Agent'] = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/70.0.3538.77 Safari/537.36"
@@ -52,32 +52,26 @@ async def search(ctx, *args):
         market = prices['Product']['market']
         sizes = prices['Product']['children']
 
-        bidsandask = ''
-        for size in sizes:
-            if (sizes[size]['market']['lowestAsk'] != 0 and sizes[size]['market']['highestBid'] != 0):
-                bidsandask += f"Size {sizes[size]['shoeSize']} | Low Ask ${sizes[size]['market']['lowestAsk']} | High Bid ${sizes[size]['market']['highestBid']}\n"
-
         embed = discord.Embed(title='StockX', color=0x43dd36)
         embed.set_thumbnail(url=results['thumbnail_url'])
 
         embed.add_field(name=general['title'], value='https://stockx.com/' + general['urlKey'], inline=False)
         embed.add_field(name='SKU/PID:', value=general['styleId'], inline=True)
         embed.add_field(name='Colorway:', value=general['colorway'], inline=True)
+        embed.add_field(name='Retail Price:', value=f"${general['retailPrice']}", inline=False)
 
-        embed.add_field(name='Retail Price:', value=f"${general['retailPrice']}", inline=True)
+        for size in sizes:
+            if len(sizes[size]['market']) != 0:
+                if (sizes[size]['market']['lowestAsk'] != 0 and sizes[size]['market']['highestBid'] != 0):
+                    embed.add_field(name = f"Size: {sizes[size]['shoeSize']}", value=f"Low Ask: $ {sizes[size]['market']['lowestAsk']}\n High Bid: $ {sizes[size]['market']['highestBid']}", inline=True)
 
-        embed.add_field(name='Sizes:', value=bidsandask, inline=False)
         embed.set_footer(text='GitHub: TestingYG', icon_url ="https://image.shutterstock.com/image-photo/cute-little-chicken-isolated-on-260nw-520818805.jpg")
 
     sku = general['styleId']
 
     for x in sites:
         for i in (googlesearch.search(sku+x ,tld='co.in',lang='en',num=10,stop=1,pause=2)):
-            if x == " Goat":
-                i = str(i) + "/available-sizes"
-                urllist.append(i)
-            else:
-                urllist.append(str(i))
+            urllist.append(str(i))
 
     #SG
     req = urllib.request.Request(urllist[0], headers=headers)
@@ -117,53 +111,62 @@ async def search(ctx, *args):
 
     for k,v in StadiumGoods.items():
         if v != '0':
-            embedSG.add_field(name=f'Size: {k}', value=v, inline=True)
+            embedSG.add_field(name=f'Size: {k}', value= f"$ {v}", inline=True)
 
     embedSG.set_footer(text='GitHub: TestingYG', icon_url ="https://image.shutterstock.com/image-photo/cute-little-chicken-isolated-on-260nw-520818805.jpg")
 
 
     #GOAT
-    req = urllib.request.Request(urllist[1], headers=headers)
-    resp = urllib.request.urlopen(req)
-    respdata = str(resp.read())
 
-    find = re.findall('formatted_available_sizes_new_v2.*?product_template_additional_pictures', respdata)
-    find = ''.join(find)
+    keywords = f"{general['styleId']}%20"
 
-    size = re.findall('"size":.*?,', find)
-    size = ''.join(size)
-    size = re.sub('.0', "", size)
-    size = re.sub('"size":"', "", size)
-    size = re.sub('"', "", size)
-    size = size[:-1]
-    size = size.split(",")
+    json_string = json.dumps({"params": f"facets=%2A&hitsPerPage=20&query={keywords}"})
+    byte_payload = bytes(json_string, 'utf-8')
+    algolia = {"x-algolia-agent": "Algolia for vanilla JavaScript 3.32.0", "x-algolia-application-id": "2FWOTDVM2O", "x-algolia-api-key": "ac96de6fef0e02bb95d433d8d5c7038a"}
 
-    price = re.findall('"price_cents":.*?,', find)
-    price = ''.join(price)
-    price = re.sub('"price_cents":', "", price)
-    price = price.split(",")
+    with requests.Session() as session:
+        r = session.post("https://2fwotdvm2o-dsn.algolia.net/1/indexes/product_variants_v2/query", params=algolia, verify=False, data=byte_payload, timeout=30)
+        results1 = r.json()["hits"][0]
+        apiurl = f"https://www.goat.com/web-api/v1/product_variants?productTemplateId={results1['slug']}"
+        url = f"https://www.goat.com/sneakers/{results1['slug']}/available-sizes"
+        header = {
+            'accept': '*/*',
+            'accept-encoding': 'gzip, deflate, br',
+            'accept-language': 'en-US,en;q=0.9,ja-JP;q=0.8,ja;q=0.7,la;q=0.6',
+            'appos': 'web',
+            'appversion': '0.1',
+            'user-agent': "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/70.0.3538.77 Safari/537.36"
+        }
 
-    for x in range(len(price)):
-        price[x] = price[x][:-2]
+        response = requests.get(apiurl, verify=False, headers=header)
+        prices = response.json()
 
-    Goat = dict(zip(size, price))
+        dic = {}
 
-    embedG = discord.Embed(title='Goat', color=0x000000)
-    embedG.set_thumbnail(url=results['thumbnail_url'])
+        for x in range(len(prices)):
+            if (prices[x]["shoeCondition"] == "new_no_defects" and prices[x]["boxCondition"] == "good_condition"):
+                reduce = prices[x]["lowestPriceCents"]["amount"] / 100
+                dic[prices[x]["size"]] = int(reduce)
 
-    embedG.add_field(name=general['title'], value= urllist[1], inline=False)
-    embedG.add_field(name='SKU/PID:', value=general['styleId'], inline=True)
-    embedG.add_field(name='Colorway:', value=general['colorway'], inline=True)
-    embedG.add_field(name='Retail Price:', value=f"${general['retailPrice']}", inline=False)
 
-    for k,v in Goat.items():
-        embedG.add_field(name=f'Size: {k}', value=v, inline=True)
+        embedG = discord.Embed(title='Goat', color=0x000000)
+        embedG.set_thumbnail(url=results['thumbnail_url'])
 
-    embedG.set_footer(text='GitHub: TestingYG', icon_url ="https://image.shutterstock.com/image-photo/cute-little-chicken-isolated-on-260nw-520818805.jpg")
+        embedG.add_field(name=general['title'], value= url, inline=False)
+        embedG.add_field(name='SKU/PID:', value=general['styleId'], inline=True)
+        embedG.add_field(name='Colorway:', value=general['colorway'], inline=True)
+        embedG.add_field(name='Retail Price:', value=f"${general['retailPrice']}", inline=False)
+
+        if len(dic) != 0:
+            for k,v in dic.items():
+                embedG.add_field(name = f"Size: {k}", value=f"$ {v}", inline=True)
+
+
+        embedG.set_footer(text='GitHub: TestingYG', icon_url ="https://image.shutterstock.com/image-photo/cute-little-chicken-isolated-on-260nw-520818805.jpg")
 
     await ctx.send(embed=embed)
     await ctx.send(embed=embedSG)
     await ctx.send(embed=embedG)
 
 
-bot.run("ENTER BOT KEY HERE")
+bot.run("")
