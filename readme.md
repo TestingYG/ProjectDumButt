@@ -12,6 +12,5 @@ Required Libaries:
 
 
 Things to do: 
-- Fix Gaot Price Searching (changed frontend)
 - Add Flight Club (Future) 
 - Add commands to search for non-shoe items
