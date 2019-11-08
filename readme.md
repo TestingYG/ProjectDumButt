@@ -13,4 +13,6 @@ Required Libaries:
 
 Things to do: 
 - Add Flight Club (Future) 
-- Add commands to search for non-shoe items
+- Add commands to search for non-shoe items(working on it)
+- Split the code up (working on it)
+- add other commands(wokring on it) 
